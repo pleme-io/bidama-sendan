@@ -1,0 +1,37 @@
+package("sendan", "0.1.2", :public)
+needs("deeta", "^0.1.0")
+needs("fairu", "^0.1.0")
+needs("gamen", "^0.1.0")
+needs("gitto", "^0.1.0")
+needs("hadome", "^0.1.0")
+needs("hikisuu", "^0.1.0")
+needs("jisho", "^0.1.0")
+needs("junjo", "^0.1.0")
+needs("kansuu", "^0.1.0")
+needs("kazu", "^0.1.0")
+needs("kyohi", "^0.1.0")
+needs("moji", "^0.1.0")
+needs("retsu", "^0.1.0")
+needs("settei", "^0.1.0")
+needs("shisutemu", "^0.1.0")
+needs("shuugou", "^0.1.0")
+needs("tesuto", "^0.1.0")
+tool("git")
+legacy_packages(
+  "0.1.2",
+  [
+    ["kakehashi", "sendan/kakehashi"],
+    ["hyouka", "sendan/kakehashi/hyouka"],
+    ["kijun", "sendan/kakehashi/kijun"],
+    ["kirikae", "sendan/kakehashi/kirikae"],
+    ["nikkusu", "sendan/kakehashi/nikkusu"],
+    ["souji", "sendan/kakehashi/souji"],
+    ["tehai", "sendan/kakehashi/tehai"],
+    ["toride", "sendan/toride"],
+    ["ukai", "sendan/ukai"],
+    ["keiyu", "sendan/keiyu"],
+    ["shinsatsu", "sendan/shinsatsu"],
+    ["utsushi", "sendan/utsushi"],
+    ["koutei", "sendan/koutei"]
+  ]
+)

@@ -8,12 +8,12 @@ standard), `kakehashi/tehai` (live builders and substituters) and
 `kakehashi/souji` (cleaning stores and targets). The root defines nothing; a
 `use("kakehashi")` brings all six.
 
-    kakehashi::hyouka::installable(".", "x") #=> ".#x"
+    sendan::kakehashi::hyouka::installable(".", "x") #=> ".#x"
 """
 
 test "the root reaches each of its levels by the path below it"
-  assert kakehashi::kijun::fleet_repo(1)[:standard] == "fleet-repo"
-  assert kakehashi::hyouka::installable(".", "x") == ".#x"
-  assert kakehashi::tehai::le_bytes(258, 3) == [2, 1, 0]
-  assert procedure?(kakehashi::souji::perform)
+  assert sendan::kakehashi::kijun::fleet_repo(1)[:standard] == "fleet-repo"
+  assert sendan::kakehashi::hyouka::installable(".", "x") == ".#x"
+  assert sendan::kakehashi::tehai::le_bytes(258, 3) == [2, 1, 0]
+  assert procedure?(sendan::kakehashi::souji::perform)
 end

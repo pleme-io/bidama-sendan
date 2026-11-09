@@ -19,11 +19,6 @@ use(
   %i[color_default duration_text show show_step step styled terminal?]
 )
 
-use(
-  "kakehashi/hyouka",
-  %i[first_out installable plan_build resolve store_hash store_name store_path?]
-)
-
 use("kyohi", %i[ok? refusal_of value])
 
 use("moji", %i[drop_chars includes lines take_chars trim])
@@ -42,6 +37,11 @@ use(
     size
     take_n
   ]
+)
+
+use(
+  "sendan/kakehashi/hyouka",
+  %i[first_out installable plan_build resolve store_hash store_name store_path?]
 )
 
 use("settei")

@@ -250,7 +250,7 @@ fixture: the text of ukai's fixture file `name`.
     starts_with?(fixture("matrix.tsv"), "corp") #=> true
 """
 def fixture(name)
-  fairu::fixture("ukai", name)
+  fairu::fixture("sendan/ukai", name)
 end
 
 def matrix_row(line)
@@ -1084,10 +1084,14 @@ def measured(routes_text, netcheck_text)
   {
     routes: parse_netstat(routes_text),
     rules: ok([]),
-    status: parse_backend_state(fairu::fixture("ukai", "status-running.json")),
+    status: parse_backend_state(
+      fairu::fixture("sendan/ukai", "status-running.json")
+    ),
     netcheck: parse_netcheck(netcheck_text),
-    derp: parse_derp_map(fairu::fixture("ukai", "derp-map.json")),
-    control: parse_dscacheutil(fairu::fixture("ukai", "dscacheutil.txt")),
+    derp: parse_derp_map(fairu::fixture("sendan/ukai", "derp-map.json")),
+    control: parse_dscacheutil(
+      fairu::fixture("sendan/ukai", "dscacheutil.txt")
+    ),
     table: ok([])
   }
 end
@@ -1116,7 +1120,7 @@ test "the matrix: every variant of every axis has exactly one row, and decide ag
   findings = tesuto::matrix_findings(
     axes,
     verdict,
-    fairu::fixture("ukai", "matrix.tsv"),
+    fairu::fixture("sendan/ukai", "matrix.tsv"),
     states
   )
   assert findings == []
@@ -1124,7 +1128,7 @@ end
 
 test "the matrix gate goes red on a missing row, a stray row and a wrong decision"
   states = tesuto::axis_states(axes)
-  text = fairu::fixture("ukai", "matrix.tsv")
+  text = fairu::fixture("sendan/ukai", "matrix.tsv")
   ls = matrix_rows(text)
   short = join(rest(ls), line_break)
   assert first(first(tesuto::matrix_findings(axes, verdict, short, states))) ==
@@ -1156,7 +1160,10 @@ test "the matrix gate goes red on a missing row, a stray row and a wrong decisio
 end
 
 test "the measured live row: full tunnel, permissive, relay, gateway present, darwin is a bypass"
-  rows = map(matrix_row, matrix_rows(fairu::fixture("ukai", "matrix.tsv")))
+  rows = map(
+    matrix_row,
+    matrix_rows(fairu::fixture("sendan/ukai", "matrix.tsv"))
+  )
   r = first(
     filter(
       fn(r)
@@ -1212,7 +1219,7 @@ end
 
 test "netstat: the measured full tunnel with no bypass yet"
   rs = get(
-    parse_netstat(fairu::fixture("ukai", "netstat-full-no-bypass.txt")),
+    parse_netstat(fairu::fixture("sendan/ukai", "netstat-full-no-bypass.txt")),
     :value
   )
   assert corp_of(rs, "utun") == :full
@@ -1226,7 +1233,7 @@ end
 
 test "netstat: the measured bypass has the 8 control-plane and 88 DERP host routes"
   rs = get(
-    parse_netstat(fairu::fixture("ukai", "netstat-full-bypassed.txt")),
+    parse_netstat(fairu::fixture("sendan/ukai", "netstat-full-bypassed.txt")),
     :value
   )
   assert corp_of(rs, "utun") == :full
@@ -1236,7 +1243,7 @@ test "netstat: the measured bypass has the 8 control-plane and 88 DERP host rout
 end
 
 test "derp-map: the real map yields 88 IPv4 nodes, never 0"
-  r = parse_derp_map(fairu::fixture("ukai", "derp-map.json"))
+  r = parse_derp_map(fairu::fixture("sendan/ukai", "derp-map.json"))
   assert r[:ok] == true
   assert size(r[:value]) == 88
   assert member?("199.38.181.93", r[:value]) == true
@@ -1250,11 +1257,11 @@ end
 
 test "netcheck: blocked reads none, bypassed reads direct, a DERP-only reply reads relay"
   assert get(
-    parse_netcheck(fairu::fixture("ukai", "netcheck-blocked.json")),
+    parse_netcheck(fairu::fixture("sendan/ukai", "netcheck-blocked.json")),
     :value
   ) == :none
   assert get(
-    parse_netcheck(fairu::fixture("ukai", "netcheck-bypassed.json")),
+    parse_netcheck(fairu::fixture("sendan/ukai", "netcheck-bypassed.json")),
     :value
   ) == :direct
   assert get(
@@ -1266,12 +1273,12 @@ test "netcheck: blocked reads none, bypassed reads direct, a DERP-only reply rea
 end
 
 test "control plane resolution and status"
-  r = parse_dscacheutil(fairu::fixture("ukai", "dscacheutil.txt"))
+  r = parse_dscacheutil(fairu::fixture("sendan/ukai", "dscacheutil.txt"))
   assert size(r[:value]) == 8
   assert member?("192.200.0.110", r[:value]) == true
   assert parse_dscacheutil(unlines(["name: x"]))[:ok] == false
   assert get(
-    parse_backend_state(fairu::fixture("ukai", "status-stopped.json")),
+    parse_backend_state(fairu::fixture("sendan/ukai", "status-stopped.json")),
     :value
   ) == "Stopped"
   assert parse_backend_state("{}")[:ok] == false
@@ -1290,8 +1297,8 @@ end
 
 test "end to end over the measured state before the bypass: enforcement unknown, so bypass every target"
   obs = measured(
-    fairu::fixture("ukai", "netstat-full-no-bypass.txt"),
-    fairu::fixture("ukai", "netcheck-blocked.json")
+    fairu::fixture("sendan/ukai", "netstat-full-no-bypass.txt"),
+    fairu::fixture("sendan/ukai", "netcheck-blocked.json")
   )
   s = assemble(cfg_for(:darwin, []), obs)
   assert row_key(s) == "full\tunknown\tnone\tpresent\tresolved\tdarwin\tnone"
@@ -1312,8 +1319,8 @@ end
 
 test "end to end over the measured state after the bypass: permissive, and only the rotated control-plane addresses left to add"
   obs = measured(
-    fairu::fixture("ukai", "netstat-full-bypassed.txt"),
-    fairu::fixture("ukai", "netcheck-bypassed.json")
+    fairu::fixture("sendan/ukai", "netstat-full-bypassed.txt"),
+    fairu::fixture("sendan/ukai", "netcheck-bypassed.json")
   )
   s = assemble(cfg_for(:darwin, []), obs)
   assert row_key(s) ==
@@ -1337,8 +1344,8 @@ test "enforcement: removed routes and blocked egress are told apart, and each re
   assert infer_enforcement(%w[a b], [], [], [], :relay) == :unknown
   assert infer_enforcement([], [], [], [], :relay) == :unknown
   obs = measured(
-    fairu::fixture("ukai", "netstat-full-no-bypass.txt"),
-    fairu::fixture("ukai", "netcheck-blocked.json")
+    fairu::fixture("sendan/ukai", "netstat-full-no-bypass.txt"),
+    fairu::fixture("sendan/ukai", "netcheck-blocked.json")
   )
   s = assemble(cfg_for(:darwin, ["199.38.181.93"]), obs)
   assert s[:enforcement] == :routes_rewritten
@@ -1348,8 +1355,8 @@ end
 test "an unreadable observation is blind, naming what could not be read"
   obs = assoc(
     measured(
-      fairu::fixture("ukai", "netstat-full-no-bypass.txt"),
-      fairu::fixture("ukai", "netcheck-blocked.json")
+      fairu::fixture("sendan/ukai", "netstat-full-no-bypass.txt"),
+      fairu::fixture("sendan/ukai", "netcheck-blocked.json")
     ),
     :derp,
     bad("tailscale exited 1")
@@ -1448,8 +1455,8 @@ end
 
 test "a move between networks with no corporate tunnel retracts every route this side applied through the old gateway, and only those"
   obs = measured(
-    fairu::fixture("ukai", "netstat-site-moved.txt"),
-    fairu::fixture("ukai", "netcheck-blocked.json")
+    fairu::fixture("sendan/ukai", "netstat-site-moved.txt"),
+    fairu::fixture("sendan/ukai", "netcheck-blocked.json")
   )
   cfg = cfg_for(:darwin, moved_applied)
   s = assemble(cfg, obs)
@@ -1468,7 +1475,7 @@ end
 
 test "a move between networks under a full tunnel retracts the old routes, then adds them through the new gateway, and is not read as rewritten routes"
   text = concat(
-    fairu::fixture("ukai", "netstat-site-moved.txt"),
+    fairu::fixture("sendan/ukai", "netstat-site-moved.txt"),
     unlines(
       [
         "0/1                utun7              UScg                utun7       ",
@@ -1476,7 +1483,7 @@ test "a move between networks under a full tunnel retracts the old routes, then 
       ]
     )
   )
-  obs = measured(text, fairu::fixture("ukai", "netcheck-blocked.json"))
+  obs = measured(text, fairu::fixture("sendan/ukai", "netcheck-blocked.json"))
   cfg = cfg_for(:darwin, moved_applied)
   s = assemble(cfg, obs)
   assert s[:enforcement] == :unknown
@@ -1497,7 +1504,10 @@ test "a move between networks under a full tunnel retracts the old routes, then 
 end
 
 test "routes through the current gateway are never stale, and a host this side never applied is never retracted"
-  rs = parse_netstat(fairu::fixture("ukai", "netstat-site-moved.txt"))[:value]
+  rs = get(
+    parse_netstat(fairu::fixture("sendan/ukai", "netstat-site-moved.txt")),
+    :value
+  )
   assert stale_via(rs, "192.168.50.1", moved_applied) == []
   assert stale_via(rs, "192.168.60.1", []) == []
   assert sorted(stale_via(rs, "192.168.60.1", moved_applied)) ==
@@ -1562,7 +1572,7 @@ test "the released words keep their behaviour through their new homes"
   assert duplicates([%w[x a], %w[x b]]) == [[:duplicate_row, "x"]]
   assert ip_rule_add_argv("ip", "192.0.2.9", 52, 5200) ==
     ip_rule_to_argv("ip", "add", "192.0.2.9", 52, 5200)
-  assert fixture("matrix.tsv") == fairu::fixture("ukai", "matrix.tsv")
+  assert fixture("matrix.tsv") == fairu::fixture("sendan/ukai", "matrix.tsv")
   assert matrix_findings(fixture("matrix.tsv"), every_state) == []
   assert starts_with?(
     matrix_text(every_state),

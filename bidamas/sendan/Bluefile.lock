@@ -1,0 +1,94 @@
+{
+  "schema": 1,
+  "bluefile_b3": "b3:713976d69bf28cd9ce9ffde86e3c71f44bec6f65bd057e94e43eacca8945ac8c",
+  "manifest": {
+    "schema": 1,
+    "name": "sendan",
+    "version": "0.1.2",
+    "needs": {
+      "deeta": "^0.1.0",
+      "fairu": "^0.1.0",
+      "gamen": "^0.1.0",
+      "gitto": "^0.1.0",
+      "hadome": "^0.1.0",
+      "hikisuu": "^0.1.0",
+      "jisho": "^0.1.0",
+      "junjo": "^0.1.0",
+      "kansuu": "^0.1.0",
+      "kazu": "^0.1.0",
+      "kyohi": "^0.1.0",
+      "moji": "^0.1.0",
+      "retsu": "^0.1.0",
+      "settei": "^0.1.0",
+      "shisutemu": "^0.1.0",
+      "shuugou": "^0.1.0",
+      "tesuto": "^0.1.0"
+    },
+    "when": "anytime",
+    "sources": {},
+    "packages": [],
+    "runs": {},
+    "tools": [
+      "git"
+    ],
+    "checks": {},
+    "apps": {},
+    "catalog": null,
+    "visibility": "public",
+    "legacy_packages": {
+      "hyouka": {
+        "since": "0.1.2",
+        "to": "sendan/kakehashi/hyouka"
+      },
+      "kakehashi": {
+        "since": "0.1.2",
+        "to": "sendan/kakehashi"
+      },
+      "keiyu": {
+        "since": "0.1.2",
+        "to": "sendan/keiyu"
+      },
+      "kijun": {
+        "since": "0.1.2",
+        "to": "sendan/kakehashi/kijun"
+      },
+      "kirikae": {
+        "since": "0.1.2",
+        "to": "sendan/kakehashi/kirikae"
+      },
+      "koutei": {
+        "since": "0.1.2",
+        "to": "sendan/koutei"
+      },
+      "nikkusu": {
+        "since": "0.1.2",
+        "to": "sendan/kakehashi/nikkusu"
+      },
+      "shinsatsu": {
+        "since": "0.1.2",
+        "to": "sendan/shinsatsu"
+      },
+      "souji": {
+        "since": "0.1.2",
+        "to": "sendan/kakehashi/souji"
+      },
+      "tehai": {
+        "since": "0.1.2",
+        "to": "sendan/kakehashi/tehai"
+      },
+      "toride": {
+        "since": "0.1.2",
+        "to": "sendan/toride"
+      },
+      "ukai": {
+        "since": "0.1.2",
+        "to": "sendan/ukai"
+      },
+      "utsushi": {
+        "since": "0.1.2",
+        "to": "sendan/utsushi"
+      }
+    }
+  },
+  "sources": {}
+}

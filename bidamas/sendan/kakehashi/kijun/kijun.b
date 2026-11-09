@@ -9,8 +9,14 @@ use("hadome")
 
 use("jisho", [:append_at])
 
+use("kyohi", [:refusal])
+
+use("moji", %i[after_first before_first glob_match? lines trim])
+
+use("retsu", %i[first flat_map is_empty last rest size take_n])
+
 use(
-  "kakehashi/nikkusu",
+  "sendan/kakehashi/nikkusu",
   %i[
     angle_paths
     args_of
@@ -33,12 +39,6 @@ use(
     string_content
   ]
 )
-
-use("kyohi", [:refusal])
-
-use("moji", %i[after_first before_first glob_match? lines trim])
-
-use("retsu", %i[first flat_map is_empty last rest size take_n])
 
 use("shisutemu", %i[blue_exe read_or status_of stderr_of stdout_of])
 use("shuugou", %i[frequencies unique])
@@ -204,7 +204,7 @@ def declared_nodes(repo)
   cfg = repo[:config]
   path = cfg[:registry]
   if member?(path, repo[:files])
-    doc = kakehashi::nikkusu::read(source_of(repo, path))
+    doc = sendan::kakehashi::nikkusu::read(source_of(repo, path))
     filter(
       (d) -> d != nil,
       map(
@@ -281,7 +281,7 @@ end
 
 def trio_calls(repo, path)
   named(
-    calls(kakehashi::nikkusu::read(source_of(repo, path))[:root]),
+    calls(sendan::kakehashi::nikkusu::read(source_of(repo, path))[:root]),
     repo[:config][:trio_factory]
   )
 end
@@ -348,7 +348,7 @@ end
 def check_reachable(repo)
   files = repo[:files]
   routes = map(
-    (p) -> code(kakehashi::nikkusu::read(source_of(repo, p))[:root]),
+    (p) -> code(sendan::kakehashi::nikkusu::read(source_of(repo, p))[:root]),
     route_files(repo)
   )
   map(
@@ -838,7 +838,9 @@ def overlay_units(repo)
       nix_under(repo[:files], "overlays/")
     ),
     fn(p)
-      set = returned_set(kakehashi::nikkusu::read(source_of(repo, p))[:root])
+      set = returned_set(
+        sendan::kakehashi::nikkusu::read(source_of(repo, p))[:root]
+      )
       if set.nil?
         []
       else
@@ -1201,7 +1203,7 @@ def in_scope?(r, path)
 end
 
 def file_facts(path, source)
-  doc = kakehashi::nikkusu::read(source)
+  doc = sendan::kakehashi::nikkusu::read(source)
   {
     path:,
     doc:,
@@ -2409,7 +2411,7 @@ test "a trio file renders itself, and the factory proves every kind but a regist
   assert subjects("layout/shared-reachable") == ["x"]
   assert subjects("layout/shared-has-proof") == %w[r x]
   assert spec_kind(
-    first(calls(kakehashi::nikkusu::read("f { kind = k; }")[:root]))
+    first(calls(sendan::kakehashi::nikkusu::read("f { kind = k; }")[:root]))
   ) == "computed"
 end
 

@@ -8,11 +8,9 @@ use("deeta", %i[as_json get_if])
 use("fairu")
 use("kyohi", %i[ok refusal])
 use("retsu", %i[first is_empty last rest size])
-use("shisutemu", [:read_or])
-use("tesuto")
 
 use(
-  "ukai",
+  "sendan/ukai",
   %i[
     after_word
     bad
@@ -26,6 +24,10 @@ use(
     unread_among
   ]
 )
+
+use("shisutemu", [:read_or])
+
+use("tesuto")
 
 @doc """
 axes: The closed set of axes one entry's answer depends on. `site` is the entry's site against the site the machine stands on.
@@ -1228,7 +1230,7 @@ config: The config fixture of toride, loaded by `load`.
     get(config, :readable) #=> true
 """
 def config()
-  load(fairu::fixture("toride", "config.json"))
+  load(fairu::fixture("sendan/toride", "config.json"))
 end
 
 @doc """
@@ -1240,15 +1242,15 @@ def alfa_commands()
   [
     [
       "ip -4 route show table main",
-      fairu::fixture("toride", "ip-route-alfa.txt")
+      fairu::fixture("sendan/toride", "ip-route-alfa.txt")
     ],
     [
       "ip -4 -o addr show dev wlo1",
-      fairu::fixture("toride", "ip-addr-alfa.txt")
+      fairu::fixture("sendan/toride", "ip-addr-alfa.txt")
     ],
     [
       "ip -4 neigh show dev wlo1",
-      fairu::fixture("toride", "ip-neigh-alfa.txt")
+      fairu::fixture("sendan/toride", "ip-neigh-alfa.txt")
     ],
     ["/usr/bin/true", ""]
   ]
@@ -1263,10 +1265,13 @@ def bravo_commands(arp)
   [
     [
       "/usr/sbin/netstat -rn -f inet",
-      fairu::fixture("toride", "netstat-bravo.txt")
+      fairu::fixture("sendan/toride", "netstat-bravo.txt")
     ],
-    ["/sbin/ifconfig en0", fairu::fixture("toride", "ifconfig-bravo.txt")],
-    ["/usr/sbin/arp -an", fairu::fixture("toride", arp)],
+    [
+      "/sbin/ifconfig en0",
+      fairu::fixture("sendan/toride", "ifconfig-bravo.txt")
+    ],
+    ["/usr/sbin/arp -an", fairu::fixture("sendan/toride", arp)],
     ["/usr/bin/true", ""]
   ]
 end
@@ -1395,14 +1400,14 @@ test "the matrix: every variant of every axis has exactly one row, and decide ag
   assert tesuto::matrix_findings(
     axes,
     verdict,
-    fairu::fixture("toride", "matrix.tsv"),
+    fairu::fixture("sendan/toride", "matrix.tsv"),
     states
   ) == []
 end
 
 test "the matrix gate goes red on a missing row, a stray row and a wrong decision"
   states = tesuto::axis_states(axes)
-  text = fairu::fixture("toride", "matrix.tsv")
+  text = fairu::fixture("sendan/toride", "matrix.tsv")
   short = replace(text, unlines(["here\tup\tnode\tinside\tdarwin\tlan"]), "")
   assert tesuto::matrix_findings(axes, verdict, short, states) ==
     [[:missing_row, "here\tup\tnode\tinside\tdarwin"]]
@@ -1533,8 +1538,7 @@ end
 test "sites, nodes and services: a malformed entry is refused alone, by name, and valid siblings proceed"
   cfg = config
   assert cfg[:refusals] == []
-  assert map((s) -> s[:name], cfg[:sites]) ==
-    %w[alfa bristol bravo charlie]
+  assert map((s) -> s[:name], cfg[:sites]) == %w[alfa bristol bravo charlie]
   alfa = first(cfg[:sites])
   assert alfa[:gateway] == "192.168.50.1"
   assert last(cfg[:sites])[:gateway] == "192.168.70.1"
@@ -1640,25 +1644,30 @@ test "sites, nodes and services: a malformed entry is refused alone, by name, an
 end
 
 test "darwin parsers over the measured Búzios captures: netstat, ifconfig and a root arp table"
-  rs = parse_netstat(fairu::fixture("toride", "netstat-bravo.txt"))[:value]
+  rs = get(
+    parse_netstat(fairu::fixture("sendan/toride", "netstat-bravo.txt")),
+    :value
+  )
   assert default_gateway(rs) == {gateway: "192.168.60.1", iface: "en0"}
   assert default_gateway(
     [{dest: "default", gateway: "link#14", flags: "UCS", iface: "en0"}]
   ).nil?
   assert get(
-    parse_ifconfig(fairu::fixture("toride", "ifconfig-bravo.txt")),
+    parse_ifconfig(fairu::fixture("sendan/toride", "ifconfig-bravo.txt")),
     :value
   ) == {addr: "192.168.60.138", prefix: 24}
   assert parse_ifconfig(unlines(["\tinet 10.0.0.2"]))[:ok] == false
   assert parse_ifconfig(unlines(["\tinet nope netmask 0xffffff00"]))[:ok] ==
     false
-  arp = parse_arp(fairu::fixture("toride", "arp-bravo.txt"))[:value]
+  arp = parse_arp(fairu::fixture("sendan/toride", "arp-bravo.txt"))[:value]
   assert size(arp) == 14
   assert mac_of(arp, "192.168.60.1", "en0") == "02:00:5e:60:00:01"
   assert mac_of(arp, "192.168.60.1", "en1") == :unread
   assert mac_of(arp, "192.168.60.3", "en0") == :unread
-  assert parse_arp(fairu::fixture("toride", "arp-unprivileged.txt"))[:value] ==
-    []
+  assert get(
+    parse_arp(fairu::fixture("sendan/toride", "arp-unprivileged.txt")),
+    :value
+  ) == []
   assert get(
     parse_arp("? (10.0.0.1) at 2:0:5e:0:0:1 on en7 ifscope [ethernet]"),
     :value
@@ -1679,18 +1688,24 @@ test "darwin parsers over the measured Búzios captures: netstat, ifconfig and a
 end
 
 test "nixos parsers over the measured Alfa captures: ip route, ip addr and ip neigh"
-  rs = parse_ip_route(fairu::fixture("toride", "ip-route-alfa.txt"))[:value]
+  rs = get(
+    parse_ip_route(fairu::fixture("sendan/toride", "ip-route-alfa.txt")),
+    :value
+  )
   assert default_gateway(rs) == {gateway: "192.168.50.1", iface: "wlo1"}
   assert get(
-    parse_ip_addr(fairu::fixture("toride", "ip-addr-alfa.txt"), "wlo1"),
+    parse_ip_addr(fairu::fixture("sendan/toride", "ip-addr-alfa.txt"), "wlo1"),
     :value
   ) == {addr: "192.168.50.3", prefix: 24}
   assert get(
-    parse_ip_addr(fairu::fixture("toride", "ip-addr-alfa.txt"), "eth9"),
+    parse_ip_addr(fairu::fixture("sendan/toride", "ip-addr-alfa.txt"), "eth9"),
     :ok
   ) == false
   assert parse_ip_addr("3: wlo1    inet nope/24 brd x", "wlo1")[:ok] == false
-  n = parse_ip_neigh(fairu::fixture("toride", "ip-neigh-alfa.txt"))[:value]
+  n = get(
+    parse_ip_neigh(fairu::fixture("sendan/toride", "ip-neigh-alfa.txt")),
+    :value
+  )
   assert size(n) == 8
   assert mac_of(n, "192.168.50.1", "wlo1") == "02:00:5e:50:00:01"
   assert mac_of(n, "192.168.50.2", "wlo1") == :unread
@@ -1921,10 +1936,8 @@ test "converge writes and reloads only when the text changes, a dry run only say
     converge(assoc(cfg, :reload, ["/no/such/reload"]), away, io),
     :result
   ) == "reload-failed"
-  assert contains?(
-    read_file(cfg[:dnsmasq_conf]),
-    "address=/plo/100.64.0.11"
-  ) == true
+  assert contains?(read_file(cfg[:dnsmasq_conf]), "address=/plo/100.64.0.11") ==
+    true
   assert get(
     converge(assoc(cfg, :dnsmasq_conf, "/dev/null/toride.conf"), run, io),
     :result
@@ -1946,10 +1959,8 @@ test "run: observe, converge and record; the streak survives between runs, and t
   third = run(cfg, io)
   assert third[:gateway] == "down"
   assert third[:result] == "written"
-  assert contains?(
-    read_file(cfg[:dnsmasq_conf]),
-    "address=/plo/100.64.0.11"
-  ) == true
+  assert contains?(read_file(cfg[:dnsmasq_conf]), "address=/plo/100.64.0.11") ==
+    true
   assert read_prior(cfg[:state_path])[:runs] == 3
   assert loud?("a", "b", 1, 30) == true
   assert loud?("a", "a", 30, 30) == true
@@ -1983,7 +1994,7 @@ test "the commands toride runs, by platform, and a probe that reaches nothing"
           [
             [
               "/usr/sbin/netstat -rn -f inet",
-              fairu::fixture("toride", "netstat-bravo.txt")
+              fairu::fixture("sendan/toride", "netstat-bravo.txt")
             ]
           ],
           ok(true)

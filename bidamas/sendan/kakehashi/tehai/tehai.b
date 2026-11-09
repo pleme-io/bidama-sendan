@@ -418,10 +418,19 @@ def run(declared_path, live_path, state_path, timeout_s, ssh, max_ms)
     filter((m) -> m[:ok] == false, machines)
   )
   checked = map(
-    (m) -> kakehashi::tehai::checked(m, timed_probe(m, timeout_s, ssh, max_ms)),
+    fn(m)
+      sendan::kakehashi::tehai::checked(
+        m,
+        timed_probe(m, timeout_s, ssh, max_ms)
+      )
+    end,
     good
   )
-  states = kakehashi::tehai::states(checked, read_previous(state_path), now)
+  states = sendan::kakehashi::tehai::states(
+    checked,
+    read_previous(state_path),
+    now
+  )
   mkdir_p(path_dirname(live_path))
   write_atomic(live_path, live_text(checked))
   record = {
@@ -539,10 +548,19 @@ def run_substituters(declared_path, live_path, state_path, timeout_s, curl)
     filter((s) -> s[:ok] == false, declared)
   )
   checked = map(
-    (s) -> kakehashi::tehai::checked(s, probe_substituter(s, timeout_s, curl)),
+    fn(s)
+      sendan::kakehashi::tehai::checked(
+        s,
+        probe_substituter(s, timeout_s, curl)
+      )
+    end,
     good
   )
-  states = kakehashi::tehai::states(checked, read_previous(state_path), now)
+  states = sendan::kakehashi::tehai::states(
+    checked,
+    read_previous(state_path),
+    now
+  )
   mkdir_p(path_dirname(live_path))
   write_atomic(live_path, substituters_text(checked))
   record = {
@@ -642,13 +660,15 @@ end
 test "only live machines are written, each line exactly as declared"
   ms = filter((m) -> m[:ok], parse(sample))
   checked = [
-    kakehashi::tehai::checked(ms[0], [false, "Connection timed out"]),
-    kakehashi::tehai::checked(ms[1], [true, "nix-store (Nix) 2.31.5"])
+    sendan::kakehashi::tehai::checked(ms[0], [false, "Connection timed out"]),
+    sendan::kakehashi::tehai::checked(ms[1], [true, "nix-store (Nix) 2.31.5"])
   ]
   assert live_text(checked) ==
     unlines(["ssh://root@plo x86_64-linux - 8 8 - - -"])
   # None live: an empty file, so nix builds locally rather than timing out.
-  assert live_text([kakehashi::tehai::checked(ms[0], [false, "down"])]) == ""
+  assert live_text(
+    [sendan::kakehashi::tehai::checked(ms[0], [false, "down"])]
+  ) == ""
 end
 
 test "since carries forward while a machine's state holds, and resets when it flips"
@@ -796,14 +816,14 @@ end
 test "substituters: only the live ones are written, as one extra-substituters line"
   ss = parse_substituters(unlines(%w[http://a:1 http://b:2?priority=29]))
   checked = [
-    kakehashi::tehai::checked(ss[0], [false, "Connection timed out"]),
-    kakehashi::tehai::checked(ss[1], [true, "StoreDir: /nix/store"])
+    sendan::kakehashi::tehai::checked(ss[0], [false, "Connection timed out"]),
+    sendan::kakehashi::tehai::checked(ss[1], [true, "StoreDir: /nix/store"])
   ]
   assert substituters_text(checked) ==
     unlines(["extra-substituters = http://b:2?priority=29"])
   # None live: an empty fragment, so nix lists no peer at all.
   assert substituters_text(
-    [kakehashi::tehai::checked(ss[0], [false, "down"])]
+    [sendan::kakehashi::tehai::checked(ss[0], [false, "down"])]
   ) == ""
 end
 
