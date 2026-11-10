@@ -1,3 +1,13 @@
 package("bidama-sendan", "0.1.0")
 
 packages("bidamas")
+tool("git")
+tool("curl")
+tool("openssh")
+app("souji", "apps/souji.b")
+app("tehai", "apps/tehai.b")
+app("kijun", "apps/kijun.b")
+app("kirikae", "apps/kirikae.b")
+app("keiyu", "apps/keiyu.b")
+app("ukai", "apps/ukai.b")
+app("toride", "apps/toride.b")

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "bluefile_b3": "b3:970cdd9d863cbdad67d402e4628fd79fa82f3392cfd4a7f1af4d2079cdd451f9",
+  "bluefile_b3": "b3:ab82730a9bcf1719ccb55c583ec6ec1195b7232c1aaa00c875bfa14932df9689",
   "manifest": {
     "schema": 1,
     "name": "bidama-sendan",
@@ -12,9 +12,35 @@
       "bidamas"
     ],
     "runs": {},
-    "tools": [],
+    "tools": [
+      "git",
+      "curl",
+      "openssh"
+    ],
     "checks": {},
-    "apps": {},
+    "apps": {
+      "keiyu": {
+        "file": "apps/keiyu.b"
+      },
+      "kijun": {
+        "file": "apps/kijun.b"
+      },
+      "kirikae": {
+        "file": "apps/kirikae.b"
+      },
+      "souji": {
+        "file": "apps/souji.b"
+      },
+      "tehai": {
+        "file": "apps/tehai.b"
+      },
+      "toride": {
+        "file": "apps/toride.b"
+      },
+      "ukai": {
+        "file": "apps/ukai.b"
+      }
+    },
     "catalog": null
   },
   "sources": {}
