@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "bluefile_b3": "b3:ab82730a9bcf1719ccb55c583ec6ec1195b7232c1aaa00c875bfa14932df9689",
+  "bluefile_b3": "b3:bab6563ac28448044cd1c87b1996b8742f5457f29f08c2e57aee4f829d124297",
   "manifest": {
     "schema": 1,
     "name": "bidama-sendan",
@@ -15,8 +15,18 @@
     "tools": [
       "git",
       "curl",
-      "openssh"
+      "openssh",
+      "iproute2",
+      "tailscale"
     ],
+    "tool_platforms": {
+      "iproute2": [
+        "linux"
+      ],
+      "tailscale": [
+        "linux"
+      ]
+    },
     "checks": {},
     "apps": {
       "keiyu": {
