@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "bluefile_b3": "b3:2703eeb49ea8f07aad52129221071cf031c14e7ccd2776add47088fd6bc59a87",
+  "bluefile_b3": "b3:b9dca2b710fa2c08c92e71885f555b20df4499b2f3c0747d6de960aecbfbe291",
   "manifest": {
     "schema": 1,
     "name": "sendan",
@@ -54,10 +54,6 @@
       "kirikae": {
         "since": "0.1.2",
         "to": "sendan/kakehashi/kirikae"
-      },
-      "koutei": {
-        "since": "0.1.2",
-        "to": "sendan/koutei"
       },
       "nikkusu": {
         "since": "0.1.2",

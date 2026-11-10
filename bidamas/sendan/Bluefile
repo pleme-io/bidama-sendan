@@ -16,21 +16,21 @@ needs("shisutemu", "^0.1.0")
 needs("shuugou", "^0.1.0")
 needs("tesuto", "^0.1.0")
 tool("git")
+
 legacy_packages(
   "0.1.2",
   [
-    ["kakehashi", "sendan/kakehashi"],
-    ["hyouka", "sendan/kakehashi/hyouka"],
-    ["kijun", "sendan/kakehashi/kijun"],
-    ["kirikae", "sendan/kakehashi/kirikae"],
-    ["nikkusu", "sendan/kakehashi/nikkusu"],
-    ["souji", "sendan/kakehashi/souji"],
-    ["tehai", "sendan/kakehashi/tehai"],
-    ["toride", "sendan/toride"],
-    ["ukai", "sendan/ukai"],
-    ["keiyu", "sendan/keiyu"],
-    ["shinsatsu", "sendan/shinsatsu"],
-    ["utsushi", "sendan/utsushi"],
-    ["koutei", "sendan/koutei"]
+    %w[kakehashi sendan/kakehashi],
+    %w[hyouka sendan/kakehashi/hyouka],
+    %w[kijun sendan/kakehashi/kijun],
+    %w[kirikae sendan/kakehashi/kirikae],
+    %w[nikkusu sendan/kakehashi/nikkusu],
+    %w[souji sendan/kakehashi/souji],
+    %w[tehai sendan/kakehashi/tehai],
+    %w[toride sendan/toride],
+    %w[ukai sendan/ukai],
+    %w[keiyu sendan/keiyu],
+    %w[shinsatsu sendan/shinsatsu],
+    %w[utsushi sendan/utsushi]
   ]
 )
