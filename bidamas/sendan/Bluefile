@@ -1,7 +1,6 @@
 package("sendan", "0.1.2", :public)
 needs("deeta", "^0.1.0")
 needs("fairu", "^0.1.0")
-needs("gamen", "^0.1.0")
 needs("gitto", "^0.1.0")
 needs("hadome", "^0.1.0")
 needs("hikisuu", "^0.1.0")
