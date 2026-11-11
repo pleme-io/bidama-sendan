@@ -13,3 +13,5 @@ app("kirikae", "apps/kirikae.b")
 app("keiyu", "apps/keiyu.b")
 app("ukai", "apps/ukai.b")
 app("toride", "apps/toride.b")
+
+check("heni-mutations", "gen/heni-gate.b", ["heni"])

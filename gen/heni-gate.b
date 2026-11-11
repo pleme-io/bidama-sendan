@@ -1,0 +1,341 @@
+@moduledoc """
+heni-gate: each sendan level with a mutation file under `heni/mutations` holds the caught ratio recorded in `heni/ratio.baseline`.
+
+A file's path below `heni/mutations` names the level it mutates:
+`sendan/toride.json` mutates `bidamas/sendan/toride`. Each file is a list of
+heni mutations, `{"name", "file", "find", "replace"}`, with `file` relative to
+the level. A ratio that falls fails the check and names the level and its
+survivors. `blue gen/heni-gate.b record` is the one writer of the baseline.
+"""
+
+use("hadome", %i[measurement orphans parse recorded render])
+
+use("heni", %i[fell? mutations report_text run score sound? survivors])
+
+use("moji", [:trim])
+use("mokuroku", [:blue_path_roots])
+use("retsu", %i[find_first flat_map is_empty last reject size])
+use("shisutemu", [:read_or])
+
+CAUGHT = "heni-caught"
+
+TOTAL = "heni-total"
+
+RECORD = "blue gen/heni-gate.b record"
+
+def off?()
+  v = getenv("BLUE_HENI_OFF")
+  if v.nil?
+    false
+  elsif v == "1"
+    true
+  else
+    raise(:heni_gate, "BLUE_HENI_OFF is \"#{v}\"; the one value it takes is 1")
+  end
+end
+
+def bidamas_root()
+  here = find_first(
+    (r) -> path_exists(path_join(r, "sendan/Bluefile")),
+    blue_path_roots(getenv("BLUE_PATH", ""))
+  )
+  if here.nil?
+    "bidamas"
+  else
+    here
+  end
+end
+
+def heni_root()
+  path_join(getenv("GEN_ROOT", "."), "heni")
+end
+
+def specs()
+  reject(
+    (p) -> not ends_with?(p, ".json"),
+    sort_keyed((p) -> p, walk_dir(path_join(heni_root, "mutations")))
+  )
+end
+
+def name_of(spec_path)
+  last(split(spec_path, "heni/mutations/"))
+end
+
+def key_of(spec_path)
+  replace(name_of(spec_path), ".json", "")
+end
+
+def chosen(all, want)
+  if want.nil?
+    all
+  else
+    hit = filter((s) -> name_of(s) == want, all)
+    if is_empty(hit)
+      raise(
+        :heni_gate,
+        "HENI_SPEC is \"#{want}\"; no file heni/mutations/#{want} exists"
+      )
+    else
+      hit
+    end
+  end
+end
+
+def package_of(spec_path)
+  path_join(bidamas_root, key_of(spec_path))
+end
+
+def baseline_path()
+  path_join(heni_root, "ratio.baseline")
+end
+
+def report(spec_path)
+  run(
+    {
+      package: package_of(spec_path),
+      mutations: mutations(json_parse(read_file(spec_path))),
+      blue: self_exe,
+      test: nil,
+      tmp: getenv("TMPDIR", "/tmp")
+    }
+  )
+end
+
+def ratio_text(q)
+  "#{to_s(q[:caught])}/#{to_s(q[:total])}"
+end
+
+def recorded_ratio(rows, key)
+  c = recorded(rows, CAUGHT, key)
+  t = recorded(rows, TOTAL, key)
+  if c.nil? or t.nil?
+    nil
+  else
+    {caught: c, total: t}
+  end
+end
+
+def survived_text(r)
+  names = survivors(r)
+  if is_empty(names)
+    "no survivor, so a caught mutation was removed"
+  else
+    "survived: #{join(names, ", ")}"
+  end
+end
+
+def problems(rows, key, r)
+  if not sound?(r)
+    ["#{key}: #{trim(report_text(r))}"]
+  else
+    was = recorded_ratio(rows, key)
+    now = score(r)
+    if was.nil?
+      [
+        "#{key}: caught #{ratio_text(now)} and the baseline has no row for it; record it: #{RECORD}"
+      ]
+    elsif fell?(was, now)
+      [
+        "#{key}: caught #{ratio_text(now)}, below its recorded #{ratio_text(was)}; #{survived_text(r)}"
+      ]
+    else
+      []
+    end
+  end
+end
+
+def rose?(rows, key, r)
+  was = recorded_ratio(rows, key)
+  was != nil and sound?(r) and fell?(score(r), was)
+end
+
+def measure(paths)
+  map((s) -> {key: key_of(s), r: report(s)}, paths)
+end
+
+def judge(rows, measured)
+  flat_map(measured, (m) -> problems(rows, m[:key], m[:r]))
+end
+
+def advisories(rows, measured, keys)
+  append(
+    map(
+      (m) -> "#{m[:key]}: caught ratio rose; bank it: #{RECORD}",
+      filter((m) -> rose?(rows, m[:key], m[:r]), measured)
+    ),
+    map(
+      fn(k)
+        "#{k}: recorded, and no mutation file names it; drop it: #{RECORD}"
+      end,
+      orphans(rows, CAUGHT, keys)
+    )
+  )
+end
+
+def rendered(measured)
+  join(
+    map(
+      fn(m)
+        q = score(m[:r])
+        concat(
+          render(CAUGHT, [measurement(m[:key], q[:caught])]),
+          render(TOTAL, [measurement(m[:key], q[:total])])
+        )
+      end,
+      sort_keyed((m) -> m[:key], measured)
+    ),
+    ""
+  )
+end
+
+def baseline_text(old, receipt, measured)
+  notes = append(
+    filter((l) -> starts_with?(l, "#"), split(old, line_break)),
+    if receipt.nil?
+      []
+    else
+      ["# receipt: #{receipt}"]
+    end
+  )
+  if is_empty(notes)
+    rendered(measured)
+  else
+    concat(unlines(notes), rendered(measured))
+  end
+end
+
+def receipt_of(args)
+  at = position("--receipt", args)
+  if at < 0
+    nil
+  else
+    args[at + 1] rescue nil
+  end
+end
+
+def record(receipt)
+  path = baseline_path
+  old = read_or(path, "")
+  rows = parse(old)
+  measured = measure(specs)
+  unsound = filter((m) -> not sound?(m[:r]), measured)
+  fell = filter(
+    fn(m)
+      was = recorded_ratio(rows, m[:key])
+      was != nil and fell?(was, score(m[:r]))
+    end,
+    measured
+  )
+  if not is_empty(unsound)
+    write_stderr(unlines(judge([], unsound)))
+    write_stderr(unlines(["refused: a run that is not sound records nothing"]))
+    exit_with(1)
+  elsif not is_empty(fell) and receipt.nil?
+    write_stderr(unlines(judge(rows, fell)))
+    write_stderr(
+      unlines(["refused: a fall needs a reason: #{RECORD} --receipt \"<why>\""])
+    )
+    exit_with(1)
+  else
+    write_file(path, baseline_text(old, receipt, measured))
+    write_stdout(
+      unlines(["recorded #{to_s(size(measured))} package(s) to #{path}"])
+    )
+  end
+end
+
+def main()
+  if argv_get(0) == "record"
+    record(receipt_of(drop(1, argv)))
+  else
+    write_stderr(unlines(["usage: #{RECORD} [--receipt WHY]"]))
+    exit_with(64)
+  end
+end
+
+test "every package holds its recorded caught ratio"
+  if not off?
+    assert size(specs) >= 2
+    rows = parse(read_or(baseline_path, ""))
+    measured = measure(chosen(specs, getenv("HENI_SPEC")))
+    map(
+      (a) -> write_stderr(unlines([a])),
+      advisories(rows, measured, map(key_of, specs))
+    )
+    bad = judge(rows, measured)
+    if not is_empty(bad)
+      write_stderr(unlines(bad))
+    end
+    assert is_empty(bad)
+  end
+end
+
+test "a mutation file names the level it mutates"
+  assert package_of("heni/mutations/sendan/toride.json") ==
+    path_join(bidamas_root, "sendan/toride")
+  assert package_of("./heni/mutations/sendan/kakehashi/souji.json") ==
+    path_join(bidamas_root, "sendan/kakehashi/souji")
+  assert key_of("./heni/mutations/sendan/ukai.json") == "sendan/ukai"
+end
+
+def fixture_run(verdicts)
+  {
+    control: 0,
+    refused: 0,
+    blind: 0,
+    results: map((v) -> {name: "m-#{to_s(v[0])}", verdict: v[1]}, verdicts)
+  }
+end
+
+test "a survivor below the recorded ratio names its package and itself"
+  rows = parse(unlines(["heni-caught: kazu 2", "heni-total: kazu 2"]))
+  held = fixture_run([[0, :caught], [1, :caught]])
+  assert judge(rows, [{key: "kazu", r: held}]) == []
+  fell = fixture_run([[0, :caught], [1, :survived]])
+  assert judge(rows, [{key: "kazu", r: fell}]) ==
+    ["kazu: caught 1/2, below its recorded 2/2; survived: m-1"]
+  grown = fixture_run([[0, :caught], [1, :caught], [2, :survived]])
+  assert judge(rows, [{key: "kazu", r: grown}]) ==
+    ["kazu: caught 2/3, below its recorded 2/2; survived: m-2"]
+  assert judge([], [{key: "kazu", r: held}]) ==
+    ["kazu: caught 2/2 and the baseline has no row for it; record it: blue gen/heni-gate.b record"]
+  refused = assoc(held, :refused, 1)
+  assert size(judge(rows, [{key: "kazu", r: refused}])) == 1
+end
+
+test "a recorded survivor holds, and the baseline round-trips"
+  rows = parse(unlines(["heni-caught: kazu 1", "heni-total: kazu 2"]))
+  debt = fixture_run([[0, :caught], [1, :survived]])
+  assert judge(rows, [{key: "kazu", r: debt}]) == []
+  text = baseline_text("# receipt: first", "second", [{key: "kazu", r: debt}])
+  assert text ==
+    unlines(
+      [
+        "# receipt: first",
+        "# receipt: second",
+        "heni-caught: kazu 1",
+        "heni-total: kazu 2"
+      ]
+    )
+  assert recorded_ratio(parse(text), "kazu") == {caught: 1, total: 2}
+  better = fixture_run([[0, :caught], [1, :caught]])
+  assert advisories(rows, [{key: "kazu", r: better}], ["kazu"]) ==
+    ["kazu: caught ratio rose; bank it: blue gen/heni-gate.b record"]
+  assert advisories(rows, [], []) ==
+    ["kazu: recorded, and no mutation file names it; drop it: blue gen/heni-gate.b record"]
+end
+
+test "HENI_SPEC measures the one spec it names, refuses a name with no spec, and unset measures all"
+  all = %w[b/heni/mutations/kazu.json b/heni/mutations/mitoshi/keisoku.json]
+  assert chosen(all, nil) == all
+  assert chosen(all, "mitoshi/keisoku.json") ==
+    ["b/heni/mutations/mitoshi/keisoku.json"]
+  assert chosen(all, "kazu.json") == ["b/heni/mutations/kazu.json"]
+  refused = begin
+    chosen(all, "mitoshi/keisoku")
+  rescue e
+    e.message
+  end
+  assert refused ==
+    "HENI_SPEC is \"mitoshi/keisoku\"; no file heni/mutations/mitoshi/keisoku exists"
+end

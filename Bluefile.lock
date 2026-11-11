@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "bluefile_b3": "b3:bab6563ac28448044cd1c87b1996b8742f5457f29f08c2e57aee4f829d124297",
+  "bluefile_b3": "b3:3863508edf6aad216e36ea3fd00dbe501cb071f370b0bae953694ab93a1bd9a4",
   "manifest": {
     "schema": 1,
     "name": "bidama-sendan",
@@ -27,7 +27,14 @@
         "linux"
       ]
     },
-    "checks": {},
+    "checks": {
+      "heni-mutations": {
+        "file": "gen/heni-gate.b",
+        "inputs": [
+          "heni"
+        ]
+      }
+    },
     "apps": {
       "keiyu": {
         "file": "apps/keiyu.b"
